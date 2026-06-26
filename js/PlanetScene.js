@@ -356,11 +356,14 @@ class PlanetScene extends Phaser.Scene {
             var seg = this.terrainSegments[i];
             if (Math.random() < 0.5 + this.planetIndex * 0.05) {
                 for (var d = 0; d < density && d < 2; d++) {
-                    var ax = seg.x + Phaser.Math.Between(-40, 40);
-                    var alien = this.aliens.create(ax, seg.y - 30, 'alien_' + alienIdx);
+                    var ax = seg.x + Phaser.Math.Between(-30, 30);
+                    var ay = seg.y - 50;
+                    var alien = this.aliens.create(ax, ay, 'alien_' + alienIdx);
                     alien.setDepth(40);
                     alien.body.setSize(24, 24);
                     alien.body.setOffset(4, 4);
+                    alien.body.checkCollision.left = false;
+                    alien.body.checkCollision.right = false;
                     alien.alienType = this.theme.alienType;
                     alien.startX = ax;
                     alien.moveDir = 1;
