@@ -118,8 +118,8 @@ class ShopScene extends Phaser.Scene {
             { id: 'wings', name: 'Wings', price: 750, texture: 'player_wings' },
         ];
 
-        const startY = 140;
-        const cardH = 90;
+        const startY = 130;
+        const cardH = 78;
 
         skins.forEach((skin, i) => {
             const y = startY + i * cardH;
