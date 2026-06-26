@@ -3,6 +3,10 @@ class BootScene extends Phaser.Scene {
         super({ key: 'BootScene' });
     }
 
+    preload() {
+        this.load.image('player_wings', 'assets/playerskin_wings.png');
+    }
+
     create() {
         this.generateAssets();
         this.generatePlanetAssets();

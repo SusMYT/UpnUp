@@ -115,6 +115,7 @@ class ShopScene extends Phaser.Scene {
             { id: 'gold', name: 'Gold', price: 500, texture: 'player_gold' },
             { id: 'shadow', name: 'Shadow', price: 400, texture: 'player_shadow' },
             { id: 'ice', name: 'Ice', price: 250, texture: 'player_ice' },
+            { id: 'wings', name: 'Wings', price: 750, texture: 'player_wings' },
         ];
 
         const startY = 140;
