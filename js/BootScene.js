@@ -9,7 +9,7 @@ class BootScene extends Phaser.Scene {
         this.load.image('player_croccat', 'assets/playerskin_CrocCat.png');
         this.load.image('boss', 'assets/bossship_Salad.png');
         this.load.image('obstacle', 'assets/obstacles_Clouds.png');
-        this.load.image('obstacle_wide', 'assets/obstacles_Satelite.png');
+        this.load.image('obstacle_spike', 'assets/obstacles_Satelite.png');
     }
 
     create() {
@@ -94,21 +94,23 @@ class BootScene extends Phaser.Scene {
         flameGfx.generateTexture('flame', 16, 16);
         flameGfx.destroy();
 
-        // Obstacle + obstacle_wide loaded from assets in preload()
+        // Obstacle loaded from assets in preload()
 
-        // Spike obstacle
-        const spikeGfx = this.make.graphics({ x: 0, y: 0, add: false });
-        spikeGfx.fillStyle(0x9b59b6, 1);
-        spikeGfx.fillRoundedRect(0, 8, 100, 20, 4);
-        spikeGfx.fillStyle(0x8e44ad, 1);
-        for (let i = 0; i < 100; i += 14) {
-            spikeGfx.fillTriangle(i, 8, i + 7, 0, i + 14, 8);
-            spikeGfx.fillTriangle(i, 28, i + 7, 36, i + 14, 28);
+        // Wide obstacle
+        var wideObstGfx = this.make.graphics({ x: 0, y: 0, add: false });
+        wideObstGfx.fillStyle(0xe67e22, 1);
+        wideObstGfx.fillRoundedRect(0, 0, 200, 24, 6);
+        wideObstGfx.fillStyle(0xd35400, 1);
+        wideObstGfx.fillRect(0, 0, 200, 6);
+        wideObstGfx.fillRect(0, 18, 200, 6);
+        wideObstGfx.fillStyle(0xba6b15, 1);
+        for (var oi = 0; oi < 200; oi += 20) {
+            wideObstGfx.fillRect(oi, 8, 10, 8);
         }
-        spikeGfx.fillStyle(0x7d3c98, 0.5);
-        spikeGfx.fillRect(0, 14, 100, 4);
-        spikeGfx.generateTexture('obstacle_spike', 100, 36);
-        spikeGfx.destroy();
+        wideObstGfx.generateTexture('obstacle_wide', 200, 24);
+        wideObstGfx.destroy();
+
+        // Spike obstacle (satellite) loaded from assets in preload()
 
         // Star (UI icon)
         const starGfx = this.make.graphics({ x: 0, y: 0, add: false });
