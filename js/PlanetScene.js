@@ -146,7 +146,24 @@ class PlanetScene extends Phaser.Scene {
         this.canShoot = true;
         this.shootCooldown = 400;
 
-        SFX.init();
+        // Click/tap to shoot (when not pressing a virtual button)
+        this.tapToShoot = false;
+        this.input.on('pointerdown', function(pointer) {
+            SFX.init();
+            // Only shoot if not tapping a virtual button area
+            var px = pointer.x;
+            var py = pointer.y;
+            var h = self.scale.height;
+            var w = self.scale.width;
+            // Virtual buttons are in bottom 90px band
+            if (py < h - 90) {
+                self.tapToShoot = true;
+            }
+        });
+        this.input.on('pointerup', function() {
+            self.tapToShoot = false;
+        });
+
         SFX.play('planetLand');
         this.cameras.main.fadeIn(500);
     }
@@ -189,7 +206,7 @@ class PlanetScene extends Phaser.Scene {
         var moveLeft = this.cursors.left.isDown || this.cursors.a.isDown || this.mobileLeft;
         var moveRight = this.cursors.right.isDown || this.cursors.d.isDown || this.mobileRight;
         var jumpPressed = this.cursors.up.isDown || this.cursors.w.isDown || this.cursors.space.isDown || this.mobileJump;
-        var shootPressed = this.cursors.shoot.isDown || this.mobileShoot;
+        var shootPressed = this.cursors.shoot.isDown || this.mobileShoot || this.tapToShoot;
 
         if (moveLeft) {
             this.player.setVelocityX(-200);
@@ -244,40 +261,45 @@ class PlanetScene extends Phaser.Scene {
 
     generateTerrain(worldW) {
         var gi = this.theme.ground;
-        var groundY = 800;
+        var lastY = 800;
         this.terrainSegments = [];
 
         // Starting zone - flat ground
-        this.addGroundBlock(0, groundY, 300, gi);
-        this.terrainSegments.push({ x: 100, y: groundY, w: 300, type: 'ground' });
+        this.addGroundBlock(0, lastY, 300, gi);
+        this.terrainSegments.push({ x: 100, y: lastY, w: 300, type: 'ground' });
 
-        // Middle segments
-        var currentY = groundY;
+        // Middle segments - keep jumps reachable (max 120px height diff)
         for (var i = 1; i < 12; i++) {
             var segX = 200 + i * 200;
             var roll = Math.random();
 
-            if (roll < 0.35) {
-                currentY += Phaser.Math.Between(-64, 32);
-                currentY = Phaser.Math.Clamp(currentY, 600, 860);
-                this.addGroundBlock(segX - 20, currentY, 220, gi);
-                this.terrainSegments.push({ x: segX + 90, y: currentY, w: 220, type: 'ground' });
-            } else if (roll < 0.7) {
-                var platY = Phaser.Math.Between(550, 750);
+            if (roll < 0.4) {
+                // Ground block - small height variation from last segment
+                var yShift = Phaser.Math.Between(-60, 40);
+                lastY = Phaser.Math.Clamp(lastY + yShift, 650, 850);
+                this.addGroundBlock(segX - 20, lastY, 220, gi);
+                this.terrainSegments.push({ x: segX + 90, y: lastY, w: 220, type: 'ground' });
+            } else if (roll < 0.75) {
+                // Platform - within jumpable range of previous segment
+                var platY = Phaser.Math.Clamp(lastY + Phaser.Math.Between(-100, 50), 580, 830);
                 this.addPlatform(segX + 30, platY, gi);
                 this.terrainSegments.push({ x: segX + 94, y: platY, w: 128, type: 'platform' });
+                lastY = platY;
             } else {
-                var rescueY = Phaser.Math.Between(600, 750);
+                // Gap with rescue platform - always reachable
+                var rescueY = Phaser.Math.Clamp(lastY + Phaser.Math.Between(-80, 30), 600, 820);
                 this.addPlatform(segX + 50, rescueY, gi);
                 this.terrainSegments.push({ x: segX + 114, y: rescueY, w: 128, type: 'platform' });
+                lastY = rescueY;
             }
         }
 
-        // End zone - launch pad
-        this.addGroundBlock(2450, 800, 250, gi);
+        // End zone - always reachable from last segment
+        var endY = Phaser.Math.Clamp(lastY + Phaser.Math.Between(-40, 40), 700, 830);
+        this.addGroundBlock(2450, endY, 250, gi);
         this.launchPadX = 2570;
-        this.launchPadY = 800;
-        this.terrainSegments.push({ x: 2570, y: 800, w: 250, type: 'launchpad' });
+        this.launchPadY = endY;
+        this.terrainSegments.push({ x: 2570, y: endY, w: 250, type: 'launchpad' });
     }
 
     addGroundBlock(x, y, width, themeIdx) {
