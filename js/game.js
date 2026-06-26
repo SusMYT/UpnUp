@@ -2,7 +2,7 @@ const config = {
     type: Phaser.AUTO,
     width: 540,
     height: 960,
-    parent: document.body,
+    parent: 'game',
     backgroundColor: '#3498db',
     antialias: true,
     roundPixels: false,
