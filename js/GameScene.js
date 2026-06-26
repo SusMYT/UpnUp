@@ -7,29 +7,34 @@ class GameScene extends Phaser.Scene {
         var self = this;
         var w = this.scale.width;
         var h = this.scale.height;
+
+        // Reset gravity (PlanetScene sets it to 800)
+        this.physics.world.gravity.y = 0;
+
+        var fromPlanet = (data && data.fromPlanet);
         var boostTarget = (data && data.startAltitude) ? data.startAltitude : 0;
 
         this.altitude = 0;
-        this.boostTarget = boostTarget;
-        this.isBoosting = (boostTarget > 0);
+        this.boostTarget = fromPlanet ? boostTarget + 200 : boostTarget;
+        this.isBoosting = (this.boostTarget > 0);
         this.gameSpeed = 2.5;
         this.baseSpeed = 2.5;
-        this.obstacleSpeed = 2.5;
+        this.obstacleSpeed = fromPlanet ? (data.obstacleSpeed || 2.5) : 2.5;
         this.isGameOver = false;
         this.isDragging = false;
         this.dragOffsetX = 0;
         this.difficultyTimer = 0;
-        this.coinsCollected = 0;
-        this.hasShield = false;
+        this.coinsCollected = fromPlanet ? (data.coins || 0) : 0;
+        this.hasShield = fromPlanet ? (data.hasShield || false) : false;
         this.isRainbow = false;
         this.rainbowTimer = null;
         this.bossActive = false;
         this.boss = null;
         this.bossHP = 0;
         this.bossMaxHP = 0;
-        this.bossNumber = 0;
-        this.nextBossAt = 5000;
-        this.bossGap = 5000;
+        this.bossNumber = fromPlanet ? (data.bossNumber || 0) : 0;
+        this.nextBossAt = fromPlanet ? (data.nextBossAt || 5000) : 5000;
+        this.bossGap = fromPlanet ? (data.bossGap || 5000) : 5000;
         this.lastZone = -1;
 
         // Sky
@@ -84,7 +89,7 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5, 0).setDepth(100);
 
         this.coinIcon = this.add.image(w - 60, 34, 'coin').setDepth(100).setScale(1);
-        this.coinText = this.add.text(w - 20, 24, '0', {
+        this.coinText = this.add.text(w - 20, 24, '' + this.coinsCollected, {
             fontSize: '22px', fontFamily: 'Arial, sans-serif',
             color: '#f1c40f', stroke: '#000000', strokeThickness: 3
         }).setOrigin(1, 0).setDepth(100);
@@ -566,10 +571,22 @@ class GameScene extends Phaser.Scene {
         this.bossGap += 5000;
         this.nextBossAt += this.bossGap;
 
-        this.time.delayedCall(2000, function() {
+        // Transition to planet after celebration
+        this.time.delayedCall(2500, function() {
             if (self.isGameOver) return;
-            self.obstacleTimer.paused = false;
-            self.coinTimer.paused = false;
+            self.cameras.main.fadeOut(500, 0, 0, 0);
+            self.time.delayedCall(600, function() {
+                self.scene.start('PlanetScene', {
+                    altitude: self.altitude,
+                    coins: self.coinsCollected,
+                    bossNumber: self.bossNumber,
+                    obstacleSpeed: self.obstacleSpeed,
+                    obstacleDelay: self.obstacleTimer.delay,
+                    nextBossAt: self.nextBossAt,
+                    bossGap: self.bossGap,
+                    hasShield: self.hasShield
+                });
+            });
         });
     }
 

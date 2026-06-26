@@ -22,6 +22,14 @@ var SFX = {
             case 'bossHit': this._bossHit(); break;
             case 'bossDefeat': this._bossDefeat(); break;
             case 'death': this._death(); break;
+            case 'planetLand': this._planetLand(); break;
+            case 'jump': this._jump(); break;
+            case 'stomp': this._stomp(); break;
+            case 'fuelPickup': this._fuelPickup(); break;
+            case 'alienShoot': this._alienShoot(); break;
+            case 'launch': this._launch(); break;
+            case 'planetHit': this._planetHit(); break;
+            case 'playerShoot': this._playerShoot(); break;
             case 'button': this._button(); break;
             case 'boost': this._boost(); break;
             case 'bossWarn': this._bossWarn(); break;
@@ -143,5 +151,83 @@ var SFX = {
         this._tone(150, 0.3, 'sawtooth', 0.12);
         this._tone(150, 0.3, 'sawtooth', 0.12, 0.4);
         this._tone(200, 0.5, 'sawtooth', 0.15, 0.8);
+    },
+
+    _planetLand: function() {
+        this._tone(100, 0.3, 'sine', 0.15);
+        this._tone(80, 0.4, 'sine', 0.1, 0.15);
+        this._noise(0.15, 0.08, 0.1);
+    },
+
+    _jump: function() {
+        var ctx = this.ctx;
+        var t = ctx.currentTime;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, t);
+        osc.frequency.exponentialRampToValueAtTime(600, t + 0.12);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    },
+
+    _stomp: function() {
+        this._noise(0.08, 0.12);
+        this._tone(200, 0.1, 'square', 0.1);
+        this._tone(400, 0.08, 'square', 0.08, 0.05);
+    },
+
+    _fuelPickup: function() {
+        this._tone(440, 0.1, 'triangle', 0.12);
+        this._tone(660, 0.1, 'triangle', 0.12, 0.08);
+        this._tone(880, 0.15, 'triangle', 0.1, 0.16);
+    },
+
+    _alienShoot: function() {
+        var ctx = this.ctx;
+        var t = ctx.currentTime;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(800, t);
+        osc.frequency.exponentialRampToValueAtTime(400, t + 0.1);
+        gain.gain.setValueAtTime(0.06, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.12);
+    },
+
+    _launch: function() {
+        var ctx = this.ctx;
+        var t = ctx.currentTime;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(100, t);
+        osc.frequency.exponentialRampToValueAtTime(2000, t + 1.5);
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 1.8);
+        this._noise(0.6, 0.06, 0.2);
+    },
+
+    _planetHit: function() {
+        this._tone(250, 0.12, 'square', 0.12);
+        this._tone(150, 0.15, 'square', 0.1, 0.08);
+        this._noise(0.08, 0.06, 0.05);
+    },
+
+    _playerShoot: function() {
+        this._tone(1000, 0.06, 'square', 0.06);
+        this._tone(700, 0.05, 'square', 0.05, 0.04);
     }
 };

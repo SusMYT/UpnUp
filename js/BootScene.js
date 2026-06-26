@@ -5,6 +5,7 @@ class BootScene extends Phaser.Scene {
 
     create() {
         this.generateAssets();
+        this.generatePlanetAssets();
         this.scene.start('MenuScene');
     }
 
@@ -317,6 +318,167 @@ class BootScene extends Phaser.Scene {
         bombGfx.fillCircle(9, 8, 2);
         bombGfx.generateTexture('boss_bomb', 20, 20);
         bombGfx.destroy();
+    }
+
+    generatePlanetAssets() {
+        var themes = [
+            { ground: 0xc0392b, light: 0xe74c3c },
+            { ground: 0xd68910, light: 0xf0b429 },
+            { ground: 0x2980b9, light: 0x74b9ff },
+            { ground: 0x7d3c98, light: 0xaf7ac5 },
+            { ground: 0xd63031, light: 0xff7675 },
+            { ground: 0x2d3436, light: 0x636e72 }
+        ];
+
+        for (var t = 0; t < themes.length; t++) {
+            var th = themes[t];
+            // Ground tile 64x64
+            var gg = this.make.graphics({ x: 0, y: 0, add: false });
+            gg.fillStyle(th.ground, 1);
+            gg.fillRect(0, 0, 64, 64);
+            gg.fillStyle(th.light, 0.3);
+            gg.fillRect(0, 0, 64, 8);
+            gg.fillStyle(0x000000, 0.15);
+            gg.fillRect(0, 56, 64, 8);
+            gg.fillStyle(th.light, 0.1);
+            for (var d = 0; d < 5; d++) {
+                gg.fillCircle(Phaser.Math.Between(5, 59), Phaser.Math.Between(12, 52), Phaser.Math.Between(2, 5));
+            }
+            gg.generateTexture('planet_ground_' + t, 64, 64);
+            gg.destroy();
+
+            // Platform 128x24
+            var pg = this.make.graphics({ x: 0, y: 0, add: false });
+            pg.fillStyle(th.ground, 1);
+            pg.fillRoundedRect(0, 0, 128, 24, 6);
+            pg.fillStyle(th.light, 0.3);
+            pg.fillRoundedRect(0, 0, 128, 8, 6);
+            pg.fillStyle(0x000000, 0.15);
+            pg.fillRect(4, 18, 120, 4);
+            pg.generateTexture('planet_platform_' + t, 128, 24);
+            pg.destroy();
+        }
+
+        // Alien textures
+        var alienColors = [
+            { body: 0x27ae60, eye: 0xffff00 },
+            { body: 0xe67e22, eye: 0xff0000 },
+            { body: 0x00cec9, eye: 0xffffff },
+            { body: 0x8e44ad, eye: 0xff00ff },
+            { body: 0xe74c3c, eye: 0xffcc00 },
+            { body: 0x636e72, eye: 0x00ff00 }
+        ];
+        for (var a = 0; a < 6; a++) {
+            var ac = alienColors[a];
+            var ag = this.make.graphics({ x: 0, y: 0, add: false });
+            ag.fillStyle(ac.body, 1);
+            ag.fillRoundedRect(4, 8, 24, 20, 6);
+            ag.fillStyle(ac.body, 0.8);
+            ag.fillCircle(16, 8, 10);
+            // Eyes
+            ag.fillStyle(0xffffff, 1);
+            ag.fillCircle(12, 6, 4);
+            ag.fillCircle(20, 6, 4);
+            ag.fillStyle(ac.eye, 1);
+            ag.fillCircle(13, 6, 2);
+            ag.fillCircle(21, 6, 2);
+            // Feet
+            ag.fillStyle(ac.body, 0.7);
+            ag.fillRoundedRect(6, 26, 8, 6, 2);
+            ag.fillRoundedRect(18, 26, 8, 6, 2);
+            ag.generateTexture('alien_' + a, 32, 32);
+            ag.destroy();
+        }
+
+        // Fuel canister 20x28
+        var fg = this.make.graphics({ x: 0, y: 0, add: false });
+        fg.fillStyle(0x2ecc71, 1);
+        fg.fillRoundedRect(4, 4, 12, 20, 3);
+        fg.fillStyle(0x27ae60, 1);
+        fg.fillRect(6, 0, 8, 4);
+        fg.fillStyle(0x58d68d, 0.5);
+        fg.fillRect(6, 6, 4, 14);
+        fg.fillStyle(0xf1c40f, 1);
+        fg.fillRect(7, 12, 6, 3);
+        fg.generateTexture('fuel_canister', 20, 28);
+        fg.destroy();
+
+        // Fuel icon (small, for HUD)
+        var fi = this.make.graphics({ x: 0, y: 0, add: false });
+        fi.fillStyle(0x2ecc71, 1);
+        fi.fillRoundedRect(2, 2, 10, 16, 2);
+        fi.fillStyle(0x27ae60, 1);
+        fi.fillRect(4, 0, 6, 3);
+        fi.fillStyle(0xf1c40f, 1);
+        fi.fillRect(5, 9, 4, 2);
+        fi.generateTexture('fuel_icon', 14, 20);
+        fi.destroy();
+
+        // Launch pad 96x32
+        var lp = this.make.graphics({ x: 0, y: 0, add: false });
+        lp.fillStyle(0x7f8c8d, 1);
+        lp.fillRoundedRect(0, 16, 96, 16, 4);
+        lp.fillStyle(0x95a5a6, 0.5);
+        lp.fillRect(4, 18, 88, 4);
+        // Chevrons
+        lp.fillStyle(0xf1c40f, 1);
+        for (var ch = 0; ch < 5; ch++) {
+            lp.fillRect(8 + ch * 18, 20, 10, 8);
+        }
+        // Rocket arrow
+        lp.fillStyle(0x2ecc71, 0.9);
+        lp.fillTriangle(48, 0, 36, 16, 60, 16);
+        lp.generateTexture('launch_pad', 96, 32);
+        lp.destroy();
+
+        // Alien bullet 10x10
+        var ab = this.make.graphics({ x: 0, y: 0, add: false });
+        ab.fillStyle(0x00ff00, 0.3);
+        ab.fillCircle(5, 5, 5);
+        ab.fillStyle(0x00ff00, 1);
+        ab.fillCircle(5, 5, 3);
+        ab.fillStyle(0xaaffaa, 0.8);
+        ab.fillCircle(4, 4, 1);
+        ab.generateTexture('alien_bullet', 10, 10);
+        ab.destroy();
+
+        // Virtual buttons
+        var btnSize = 56;
+        var makeBtn = function(scene, key, color, symbol) {
+            var bg = scene.make.graphics({ x: 0, y: 0, add: false });
+            bg.fillStyle(color, 0.4);
+            bg.fillCircle(btnSize / 2, btnSize / 2, btnSize / 2);
+            bg.fillStyle(color, 0.7);
+            bg.fillCircle(btnSize / 2, btnSize / 2, btnSize / 2 - 4);
+            // Draw symbol
+            bg.fillStyle(0xffffff, 0.9);
+            if (symbol === 'left') {
+                bg.fillTriangle(16, 28, 38, 16, 38, 40);
+            } else if (symbol === 'right') {
+                bg.fillTriangle(40, 28, 18, 16, 18, 40);
+            } else if (symbol === 'jump') {
+                bg.fillTriangle(28, 14, 16, 38, 40, 38);
+            } else if (symbol === 'shoot') {
+                bg.fillCircle(28, 28, 8);
+            }
+            bg.generateTexture(key, btnSize, btnSize);
+            bg.destroy();
+        };
+        makeBtn(this, 'btn_left', 0x3498db, 'left');
+        makeBtn(this, 'btn_right', 0x3498db, 'right');
+        makeBtn(this, 'btn_jump', 0x2ecc71, 'jump');
+        makeBtn(this, 'btn_shoot', 0xe74c3c, 'shoot');
+
+        // Player bullet (sideways) 12x8
+        var pb = this.make.graphics({ x: 0, y: 0, add: false });
+        pb.fillStyle(0x00fff0, 0.3);
+        pb.fillEllipse(6, 4, 12, 8);
+        pb.fillStyle(0x00fff0, 1);
+        pb.fillEllipse(6, 4, 8, 5);
+        pb.fillStyle(0xffffff, 0.8);
+        pb.fillEllipse(4, 3, 4, 3);
+        pb.generateTexture('player_bullet', 12, 8);
+        pb.destroy();
     }
 
     getSkinColors(skinId) {
