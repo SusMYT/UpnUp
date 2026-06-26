@@ -189,6 +189,44 @@ class MenuScene extends Phaser.Scene {
             color: '#95a5a6'
         }).setOrigin(0.5);
 
+        // Code redeem button (bottom left)
+        var codeLabel = this.add.text(16, height - 30, 'CODE', {
+            fontSize: '14px',
+            fontFamily: 'Arial Black, Arial, sans-serif',
+            color: '#636e72',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
+
+        var self = this;
+        codeLabel.on('pointerover', function() { codeLabel.setColor('#ffffff'); });
+        codeLabel.on('pointerout', function() { codeLabel.setColor('#636e72'); });
+        codeLabel.on('pointerdown', function() {
+            var code = prompt('Enter code:');
+            if (!code) return;
+            var usedCodes = JSON.parse(localStorage.getItem('upnup_used_codes') || '[]');
+            var codeUpper = code.trim().toUpperCase();
+
+            // Valid codes
+            var validCodes = { 'SALAD': 5000 };
+
+            if (validCodes[codeUpper]) {
+                if (usedCodes.indexOf(codeUpper) !== -1) {
+                    alert('Code already used!');
+                    return;
+                }
+                var coins = parseInt(localStorage.getItem('upnup_coins') || '0');
+                coins += validCodes[codeUpper];
+                localStorage.setItem('upnup_coins', coins);
+                usedCodes.push(codeUpper);
+                localStorage.setItem('upnup_used_codes', JSON.stringify(usedCodes));
+                alert('+' + validCodes[codeUpper] + ' coins!');
+                self.scene.restart();
+            } else {
+                alert('Invalid code!');
+            }
+        });
+
         this.cameras.main.fadeIn(500);
     }
 
