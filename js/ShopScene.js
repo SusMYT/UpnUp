@@ -233,6 +233,7 @@ class ShopScene extends Phaser.Scene {
 
                 if (canAfford) {
                     buyBtn.on('pointerdown', () => {
+                        if (!confirm('Buy ' + skin.name + ' for ' + skin.price + ' coins?')) return;
                         this.spendCoins(skin.price);
                         this.addOwnedSkin(skin.id);
                         localStorage.setItem('upnup_skin', skin.id);
@@ -315,6 +316,7 @@ class ShopScene extends Phaser.Scene {
 
             if (canAfford) {
                 buyBtn.on('pointerdown', () => {
+                    if (!confirm('Buy ' + item.name + ' for ' + item.price + ' coins?')) return;
                     this.spendCoins(item.price);
                     this.addSkip(item.id);
                     this.refreshShop();
