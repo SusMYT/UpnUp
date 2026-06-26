@@ -8,6 +8,8 @@ class BootScene extends Phaser.Scene {
         this.load.image('player_cheddarfries', 'assets/playerskin_CheddarFries.png');
         this.load.image('player_croccat', 'assets/playerskin_CrocCat.png');
         this.load.image('boss', 'assets/bossship_Salad.png');
+        this.load.image('obstacle', 'assets/obstacles_Clouds.png');
+        this.load.image('obstacle_wide', 'assets/obstacles_Satelite.png');
     }
 
     create() {
@@ -92,34 +94,7 @@ class BootScene extends Phaser.Scene {
         flameGfx.generateTexture('flame', 16, 16);
         flameGfx.destroy();
 
-        // Obstacle - beam (wider, more detailed)
-        const obstGfx = this.make.graphics({ x: 0, y: 0, add: false });
-        obstGfx.fillStyle(0xe74c3c, 1);
-        obstGfx.fillRoundedRect(0, 0, 120, 24, 6);
-        obstGfx.fillStyle(0xc0392b, 1);
-        obstGfx.fillRoundedRect(0, 0, 120, 6, { tl: 6, tr: 6, bl: 0, br: 0 });
-        obstGfx.fillRoundedRect(0, 18, 120, 6, { tl: 0, tr: 0, bl: 6, br: 6 });
-        // Hazard stripes
-        obstGfx.fillStyle(0xb03a2e, 1);
-        for (let i = 0; i < 120; i += 20) {
-            obstGfx.fillRect(i, 8, 10, 8);
-        }
-        obstGfx.generateTexture('obstacle', 120, 24);
-        obstGfx.destroy();
-
-        // Wide obstacle
-        const wideObstGfx = this.make.graphics({ x: 0, y: 0, add: false });
-        wideObstGfx.fillStyle(0xe67e22, 1);
-        wideObstGfx.fillRoundedRect(0, 0, 200, 24, 6);
-        wideObstGfx.fillStyle(0xd35400, 1);
-        wideObstGfx.fillRoundedRect(0, 0, 200, 6, { tl: 6, tr: 6, bl: 0, br: 0 });
-        wideObstGfx.fillRoundedRect(0, 18, 200, 6, { tl: 0, tr: 0, bl: 6, br: 6 });
-        wideObstGfx.fillStyle(0xba6b15, 1);
-        for (let i = 0; i < 200; i += 20) {
-            wideObstGfx.fillRect(i, 8, 10, 8);
-        }
-        wideObstGfx.generateTexture('obstacle_wide', 200, 24);
-        wideObstGfx.destroy();
+        // Obstacle + obstacle_wide loaded from assets in preload()
 
         // Spike obstacle
         const spikeGfx = this.make.graphics({ x: 0, y: 0, add: false });
