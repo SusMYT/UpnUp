@@ -114,6 +114,8 @@ class GameScene extends Phaser.Scene {
 
         // Boost label
         if (this.isBoosting) {
+            SFX.init();
+            SFX.play('boost');
             this.boostLabel = this.add.text(w / 2, h * 0.42, 'BOOSTING...', {
                 fontSize: '30px', fontFamily: 'Arial Black, Arial, sans-serif',
                 color: '#2ecc71', stroke: '#000000', strokeThickness: 5
@@ -122,6 +124,7 @@ class GameScene extends Phaser.Scene {
 
         // Controls
         this.input.on('pointerdown', function(pointer) {
+            SFX.init();
             self.isDragging = true;
             self.dragOffsetX = self.player.x - pointer.x;
         });
@@ -355,6 +358,7 @@ class GameScene extends Phaser.Scene {
         this.hasShield = true;
         this.shieldIcon.setVisible(true);
         this.shieldLabel.setVisible(true);
+        SFX.play('shield');
     }
 
     useShield() {
@@ -363,6 +367,7 @@ class GameScene extends Phaser.Scene {
         this.shieldLabel.setVisible(false);
         this.shieldGfx.clear();
         this.cameras.main.shake(200, 0.01);
+        SFX.play('shieldBreak');
         this.player.setAlpha(0.5);
         var p = this.player;
         this.time.delayedCall(800, function() { if (p && p.active) p.setAlpha(1); });
@@ -380,6 +385,7 @@ class GameScene extends Phaser.Scene {
         this.obstacles.clear(true, true);
         this.collectibles.clear(true, true);
         this.zoneText.setAlpha(0);
+        SFX.play('bossWarn');
 
         var warnText = this.add.text(w / 2, 250, 'BOSS ' + this.bossNumber, {
             fontSize: '46px', fontFamily: 'Arial Black, Arial, sans-serif',
@@ -414,6 +420,7 @@ class GameScene extends Phaser.Scene {
         b.body.setAllowGravity(false);
         b.setScale(1.3);
         b.setDepth(45);
+        SFX.play('shoot');
     }
 
     bossFire() {
@@ -430,6 +437,7 @@ class GameScene extends Phaser.Scene {
 
     damageBoss(amount) {
         this.bossHP -= amount;
+        SFX.play('bossHit');
         var self = this;
         if (this.boss && this.boss.active) {
             this.boss.setTint(0xffffff);
@@ -450,6 +458,7 @@ class GameScene extends Phaser.Scene {
         this.bossBombs.clear(true, true);
         this.bullets.clear(true, true);
 
+        SFX.play('bossDefeat');
         if (this.boss && this.boss.active) {
             this.cameras.main.shake(500, 0.02);
             this.cameras.main.flash(300, 255, 100, 0);
@@ -572,6 +581,7 @@ class GameScene extends Phaser.Scene {
         coin.destroy();
         this.coinsCollected++;
         this.coinText.setText('' + this.coinsCollected);
+        SFX.play('coin');
     }
 
     hitObstacle(player, obstacle) {
@@ -584,6 +594,7 @@ class GameScene extends Phaser.Scene {
         this.isGameOver = true;
         this.isDragging = false;
         this.flameEmitter.stop();
+        SFX.play('death');
         this.shootTimer.paused = true;
         this.bossBombTimer.paused = true;
         this.player.setTint(0xff0000);

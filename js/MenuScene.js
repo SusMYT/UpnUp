@@ -147,6 +147,8 @@ class MenuScene extends Phaser.Scene {
         btn.on('pointerover', () => btn.setScale(1.05));
         btn.on('pointerout', () => btn.setScale(1));
         btn.on('pointerdown', () => {
+            SFX.init();
+            SFX.play('button');
             btn.setScale(0.95);
             // Consume the boost if one is selected
             if (this.selectedSkip > 0 && this.boostOptions) {
