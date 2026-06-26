@@ -116,10 +116,12 @@ class ShopScene extends Phaser.Scene {
             { id: 'shadow', name: 'Shadow', price: 400, texture: 'player_shadow' },
             { id: 'ice', name: 'Ice', price: 250, texture: 'player_ice' },
             { id: 'wings', name: 'Wings', price: 750, texture: 'player_wings' },
+            { id: 'cheddarfries', name: 'Cheddar Fries', price: 500, texture: 'player_cheddarfries' },
+            { id: 'croccat', name: 'Croc Cat', price: 600, texture: 'player_croccat' },
         ];
 
-        const startY = 130;
-        const cardH = 78;
+        const startY = 125;
+        const cardH = 68;
 
         skins.forEach((skin, i) => {
             const y = startY + i * cardH;
@@ -137,7 +139,7 @@ class ShopScene extends Phaser.Scene {
             this.shopContent.add(card);
 
             // Player preview
-            const preview = this.add.image(65, y + (cardH - 8) / 2, skin.texture).setScale(1.2);
+            const preview = this.add.image(60, y + (cardH - 8) / 2, skin.texture).setScale(0.9);
             this.shopContent.add(preview);
 
             // Name
