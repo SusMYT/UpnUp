@@ -53,8 +53,50 @@ class ShopScene extends Phaser.Scene {
         this.skinsTab.on('pointerdown', () => { this.currentTab = 'skins'; this.refreshShop(); });
         this.powerTab.on('pointerdown', () => { this.currentTab = 'powerups'; this.refreshShop(); });
 
-        // Content container
+        // Scrollable content area
+        this.scrollY = 0;
+        this.scrollMin = 0;
+        this.contentHeight = 0;
+        this.scrollAreaTop = 120;
+        this.scrollAreaBot = height;
+
+        // Mask to clip content to scroll area
+        var maskGfx = this.make.graphics({ x: 0, y: 0, add: false });
+        maskGfx.fillRect(0, this.scrollAreaTop, width, this.scrollAreaBot - this.scrollAreaTop);
+        var mask = maskGfx.createGeometryMask();
+
         this.shopContent = this.add.container(0, 0);
+        this.shopContent.setMask(mask);
+
+        // Scroll with drag
+        var dragStartY = 0;
+        var scrollStartY = 0;
+        var isDragging = false;
+        var self = this;
+
+        this.input.on('pointerdown', function(pointer) {
+            if (pointer.y > self.scrollAreaTop) {
+                isDragging = true;
+                dragStartY = pointer.y;
+                scrollStartY = self.scrollY;
+            }
+        });
+        this.input.on('pointermove', function(pointer) {
+            if (isDragging && pointer.isDown) {
+                var dy = pointer.y - dragStartY;
+                self.scrollY = scrollStartY + dy;
+                self.clampScroll();
+                self.shopContent.y = self.scrollY;
+            }
+        });
+        this.input.on('pointerup', function() { isDragging = false; });
+
+        // Mouse wheel scroll
+        this.input.on('wheel', function(pointer, gameObjects, deltaX, deltaY) {
+            self.scrollY -= deltaY * 0.5;
+            self.clampScroll();
+            self.shopContent.y = self.scrollY;
+        });
 
         // Back button
         const backText = this.add.text(40, 30, '< BACK', {
@@ -94,12 +136,20 @@ class ShopScene extends Phaser.Scene {
         this.shopContent.removeAll(true);
         this.drawTabUnderlines();
         this.coinText.setText(`${this.getCoins()}`);
+        this.scrollY = 0;
+        this.shopContent.y = 0;
 
         if (this.currentTab === 'skins') {
             this.showSkins();
         } else {
             this.showPowerups();
         }
+    }
+
+    clampScroll() {
+        var viewH = this.scrollAreaBot - this.scrollAreaTop;
+        var maxScroll = Math.max(0, this.contentHeight - viewH);
+        this.scrollY = Phaser.Math.Clamp(this.scrollY, -maxScroll, 0);
     }
 
     showSkins() {
@@ -120,8 +170,8 @@ class ShopScene extends Phaser.Scene {
             { id: 'croccat', name: 'Croc Cat', price: 600, texture: 'player_croccat' },
         ];
 
-        const startY = 125;
-        const cardH = 68;
+        const startY = 130;
+        const cardH = 85;
 
         skins.forEach((skin, i) => {
             const y = startY + i * cardH;
@@ -139,7 +189,7 @@ class ShopScene extends Phaser.Scene {
             this.shopContent.add(card);
 
             // Player preview
-            const preview = this.add.image(60, y + (cardH - 8) / 2, skin.texture).setScale(0.9);
+            const preview = this.add.image(60, y + (cardH - 8) / 2, skin.texture).setScale(1);
             this.shopContent.add(preview);
 
             // Name
@@ -193,6 +243,7 @@ class ShopScene extends Phaser.Scene {
                 this.shopContent.add(priceLabel);
             }
         });
+        this.contentHeight = startY + skins.length * cardH + 20;
     }
 
     showPowerups() {
@@ -273,6 +324,7 @@ class ShopScene extends Phaser.Scene {
             this.shopContent.add(buyBtn);
             this.shopContent.add(priceLabel);
         });
+        this.contentHeight = startY + 80 + powerups.length * cardH + 20;
     }
 
     getCoins() {
