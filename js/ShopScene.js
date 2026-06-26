@@ -255,6 +255,7 @@ class ShopScene extends Phaser.Scene {
             { id: 'skip_small', name: 'Small Boost', desc: 'Start at 200m', skip: 200, price: 50 },
             { id: 'skip_medium', name: 'Big Boost', desc: 'Start at 500m', skip: 500, price: 100 },
             { id: 'skip_mega', name: 'Mega Boost', desc: 'Start at 1000m', skip: 1000, price: 200 },
+            { id: 'rainbow', name: 'Rainbow Star', desc: '5s invincibility + speed', skip: 0, price: 300 },
         ];
 
         const startY = 140;
@@ -275,6 +276,7 @@ class ShopScene extends Phaser.Scene {
         if (skips.small > 0) skipLabels.push(`200m x${skips.small}`);
         if (skips.medium > 0) skipLabels.push(`500m x${skips.medium}`);
         if (skips.mega > 0) skipLabels.push(`1000m x${skips.mega}`);
+        if (skips.rainbow > 0) skipLabels.push(`Rainbow x${skips.rainbow}`);
         const skipStr = skipLabels.length > 0 ? skipLabels.join('  |  ') : 'None';
 
         this.shopContent.add(this.add.text(width / 2, ownedY + 38, skipStr, {
@@ -361,6 +363,7 @@ class ShopScene extends Phaser.Scene {
         if (skipId === 'skip_small') skips.small++;
         if (skipId === 'skip_medium') skips.medium++;
         if (skipId === 'skip_mega') skips.mega++;
+        if (skipId === 'rainbow') skips.rainbow = (skips.rainbow || 0) + 1;
         localStorage.setItem('upnup_skips', JSON.stringify(skips));
     }
 }

@@ -105,12 +105,41 @@ class GameScene extends Phaser.Scene {
             color: '#00cec9', stroke: '#000000', strokeThickness: 3
         }).setDepth(100).setVisible(false);
 
-        // Rainbow indicator
+        // Rainbow indicator (shows when rainbow is active)
         this.rainbowIcon = this.add.image(30, 34, 'rainbow_pickup').setDepth(100).setScale(0.8).setVisible(false);
         this.rainbowLabel = this.add.text(52, 24, 'STAR!', {
             fontSize: '13px', fontFamily: 'Arial Black, Arial, sans-serif',
             color: '#ff4444', stroke: '#000000', strokeThickness: 3
         }).setDepth(100).setVisible(false);
+
+        // Rainbow use button (shows if player owns rainbow powerups)
+        this.ownedRainbows = this.getRainbowCount();
+        this.rainbowBtn = this.add.image(w - 45, h - 45, 'rainbow_pickup').setDepth(100).setScale(1.2).setVisible(false).setInteractive({ useHandCursor: true });
+        this.rainbowBtnText = this.add.text(w - 45, h - 18, '', {
+            fontSize: '12px', fontFamily: 'Arial Black, Arial, sans-serif',
+            color: '#ffffff', stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5).setDepth(100).setVisible(false);
+
+        if (this.ownedRainbows > 0) {
+            this.rainbowBtn.setVisible(true);
+            this.rainbowBtnText.setText('x' + this.ownedRainbows).setVisible(true);
+        }
+
+        var self = this;
+        this.rainbowBtn.on('pointerdown', function() {
+            if (self.isRainbow || self.ownedRainbows <= 0 || self.isGameOver || self.bossActive) return;
+            self.ownedRainbows--;
+            var skips = JSON.parse(localStorage.getItem('upnup_skips') || '{}');
+            skips.rainbow = Math.max(0, (skips.rainbow || 0) - 1);
+            localStorage.setItem('upnup_skips', JSON.stringify(skips));
+            if (self.ownedRainbows > 0) {
+                self.rainbowBtnText.setText('x' + self.ownedRainbows);
+            } else {
+                self.rainbowBtn.setVisible(false);
+                self.rainbowBtnText.setVisible(false);
+            }
+            self.activateRainbow();
+        });
 
         // Boss HP bar
         this.bossHPBarBg = this.add.graphics().setDepth(100);
@@ -648,6 +677,12 @@ class GameScene extends Phaser.Scene {
         if (this.altitude < 40000) return 3;
         if (this.altitude < 50000) return 4;
         return 5;
+    }
+
+    getRainbowCount() {
+        var raw = localStorage.getItem('upnup_skips');
+        var skips = raw ? JSON.parse(raw) : {};
+        return skips.rainbow || 0;
     }
 
     getZoneProgress() {
