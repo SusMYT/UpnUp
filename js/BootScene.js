@@ -5,6 +5,7 @@ class BootScene extends Phaser.Scene {
 
     preload() {
         this.load.image('player_wings', 'assets/playerskin_wings.png');
+        this.load.image('boss', 'assets/bossship_Salad.png');
     }
 
     create() {
@@ -275,40 +276,7 @@ class BootScene extends Phaser.Scene {
         bulletGfx.generateTexture('bullet', 12, 20);
         bulletGfx.destroy();
 
-        // Boss ship - cleaner UFO/saucer design
-        var bossGfx = this.make.graphics({ x: 0, y: 0, add: false });
-        // Shadow/glow under
-        bossGfx.fillStyle(0x660000, 0.3);
-        bossGfx.fillEllipse(60, 50, 100, 20);
-        // Main saucer body
-        bossGfx.fillStyle(0x8b0000, 1);
-        bossGfx.fillEllipse(60, 35, 110, 35);
-        // Top dome
-        bossGfx.fillStyle(0xcc0000, 1);
-        bossGfx.fillEllipse(60, 28, 60, 28);
-        // Dome highlight
-        bossGfx.fillStyle(0xff2222, 0.6);
-        bossGfx.fillEllipse(60, 22, 40, 16);
-        // Core eye
-        bossGfx.fillStyle(0xff0000, 1);
-        bossGfx.fillCircle(60, 35, 8);
-        bossGfx.fillStyle(0xffcc00, 0.8);
-        bossGfx.fillCircle(60, 35, 4);
-        // Side lights
-        bossGfx.fillStyle(0xff6600, 0.9);
-        bossGfx.fillCircle(20, 38, 5);
-        bossGfx.fillCircle(100, 38, 5);
-        bossGfx.fillCircle(38, 46, 4);
-        bossGfx.fillCircle(82, 46, 4);
-        // Bottom rim
-        bossGfx.fillStyle(0x660000, 1);
-        bossGfx.fillEllipse(60, 44, 90, 10);
-        // Engine glow
-        bossGfx.fillStyle(0xff4400, 0.7);
-        bossGfx.fillEllipse(45, 52, 12, 6);
-        bossGfx.fillEllipse(75, 52, 12, 6);
-        bossGfx.generateTexture('boss', 120, 60);
-        bossGfx.destroy();
+        // Boss ship loaded from assets/bossship_Salad.png in preload()
 
         // Boss bomb - energy ball
         var bombGfx = this.make.graphics({ x: 0, y: 0, add: false });
