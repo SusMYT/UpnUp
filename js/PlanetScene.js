@@ -202,6 +202,16 @@ class PlanetScene extends Phaser.Scene {
         if (this.isDead || this.hasLaunched) return;
         var self = this;
 
+        // Launch check - use position instead of overlap flag
+        var nearPad = Math.abs(this.player.x - this.launchPadX) < 100 && Math.abs(this.player.y - this.launchPadY) < 80;
+        if (!nearPad) {
+            this.launchPrompt.setVisible(false);
+        }
+        if (nearPad && this.tapToShoot && this.fuelCollected >= this.fuelNeeded) {
+            this.launchSequence();
+            return;
+        }
+
         // Movement
         var moveLeft = this.cursors.left.isDown || this.cursors.a.isDown || this.mobileLeft;
         var moveRight = this.cursors.right.isDown || this.cursors.d.isDown || this.mobileRight;
@@ -602,20 +612,12 @@ class PlanetScene extends Phaser.Scene {
 
     checkLaunchPad(player, zone) {
         if (this.hasLaunched || this.isDead) return;
+        this.onLaunchPad = true;
 
         if (this.fuelCollected >= this.fuelNeeded) {
             this.launchPrompt.setVisible(true);
             this.launchPrompt.setText('TAP TO LAUNCH!');
-            if (!this.launchListenerAdded) {
-                this.launchListenerAdded = true;
-                var self = this;
-                this.input.on('pointerdown', function() {
-                    if (self.fuelCollected >= self.fuelNeeded && !self.hasLaunched &&
-                        Math.abs(self.player.x - self.launchPadX) < 80) {
-                        self.launchSequence();
-                    }
-                });
-            }
+            this.launchPrompt.setColor('#2ecc71');
         } else {
             this.launchPrompt.setVisible(true);
             this.launchPrompt.setText('Need ' + (this.fuelNeeded - this.fuelCollected) + ' more fuel!');
