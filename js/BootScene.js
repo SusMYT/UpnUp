@@ -187,6 +187,27 @@ class BootScene extends Phaser.Scene {
         shieldGfx.generateTexture('shield_pickup', 36, 36);
         shieldGfx.destroy();
 
+        // Rainbow star pickup
+        var rbGfx = this.make.graphics({ x: 0, y: 0, add: false });
+        rbGfx.fillStyle(0xff0000, 0.2);
+        rbGfx.fillCircle(18, 18, 18);
+        rbGfx.fillStyle(0xff0000, 0.8);
+        rbGfx.fillCircle(18, 18, 13);
+        rbGfx.fillStyle(0xff8800, 0.7);
+        rbGfx.fillCircle(18, 18, 10);
+        rbGfx.fillStyle(0xffff00, 0.7);
+        rbGfx.fillCircle(18, 18, 7);
+        rbGfx.fillStyle(0x00ff00, 0.8);
+        rbGfx.fillCircle(18, 14, 5);
+        rbGfx.fillStyle(0x0088ff, 0.7);
+        rbGfx.fillCircle(15, 18, 4);
+        rbGfx.fillStyle(0xaa00ff, 0.7);
+        rbGfx.fillCircle(21, 18, 4);
+        rbGfx.fillStyle(0xffffff, 0.6);
+        rbGfx.fillCircle(15, 14, 3);
+        rbGfx.generateTexture('rainbow_pickup', 36, 36);
+        rbGfx.destroy();
+
         // Clouds (larger, softer)
         const cloudGfx = this.make.graphics({ x: 0, y: 0, add: false });
         cloudGfx.fillStyle(0xffffff, 0.25);

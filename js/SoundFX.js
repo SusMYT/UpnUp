@@ -25,6 +25,7 @@ var SFX = {
             case 'button': this._button(); break;
             case 'boost': this._boost(); break;
             case 'bossWarn': this._bossWarn(); break;
+            case 'rainbow': this._rainbow(); break;
         }
     },
 
@@ -127,6 +128,15 @@ var SFX = {
         gain.connect(ctx.destination);
         osc.start(t);
         osc.stop(t + 0.6);
+    },
+
+    _rainbow: function() {
+        this._tone(523, 0.12, 'sine', 0.12);
+        this._tone(659, 0.12, 'sine', 0.12, 0.08);
+        this._tone(784, 0.12, 'sine', 0.12, 0.16);
+        this._tone(1047, 0.12, 'sine', 0.12, 0.24);
+        this._tone(1319, 0.2, 'sine', 0.1, 0.32);
+        this._tone(1568, 0.3, 'sine', 0.08, 0.4);
     },
 
     _bossWarn: function() {

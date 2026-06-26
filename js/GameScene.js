@@ -14,26 +14,27 @@ class GameScene extends Phaser.Scene {
         this.isBoosting = (boostTarget > 0);
         this.gameSpeed = 2.5;
         this.baseSpeed = 2.5;
+        this.obstacleSpeed = 2.5;
         this.isGameOver = false;
         this.isDragging = false;
         this.dragOffsetX = 0;
         this.difficultyTimer = 0;
         this.coinsCollected = 0;
         this.hasShield = false;
+        this.isRainbow = false;
+        this.rainbowTimer = null;
         this.bossActive = false;
         this.boss = null;
         this.bossHP = 0;
         this.bossMaxHP = 0;
         this.bossNumber = 0;
         this.nextBossAt = 5000;
-        this.bossSpeedBoost = 0;
+        this.bossGap = 5000;
         this.lastZone = -1;
 
         // Sky
         this.skyBg = this.add.graphics();
         this.nebulaGfx = this.add.graphics().setDepth(1);
-
-        // Simple sky fill for now
         this.skyBg.fillStyle(0x3498db, 1);
         this.skyBg.fillRect(0, 0, w, h);
 
@@ -66,18 +67,14 @@ class GameScene extends Phaser.Scene {
 
         // Flame
         this.flameEmitter = this.add.particles(0, 0, 'flame', {
-            follow: this.player,
-            followOffset: { x: -4, y: 36 },
-            speed: { min: 50, max: 120 },
-            angle: { min: 75, max: 105 },
-            scale: { start: 0.8, end: 0 },
-            lifespan: 350,
-            tint: [0xff6600, 0xff3300, 0xffcc00],
-            frequency: 25,
-            quantity: 2
+            follow: this.player, followOffset: { x: -4, y: 36 },
+            speed: { min: 50, max: 120 }, angle: { min: 75, max: 105 },
+            scale: { start: 0.8, end: 0 }, lifespan: 350,
+            tint: [0xff6600, 0xff3300, 0xffcc00], frequency: 25, quantity: 2
         }).setDepth(49);
 
-        // Shield visual
+        // Rainbow glow graphics
+        this.rainbowGfx = this.add.graphics().setDepth(51);
         this.shieldGfx = this.add.graphics().setDepth(51);
 
         // UI
@@ -103,7 +100,14 @@ class GameScene extends Phaser.Scene {
             color: '#00cec9', stroke: '#000000', strokeThickness: 3
         }).setDepth(100).setVisible(false);
 
-        // Boss HP bar - positioned below altitude text
+        // Rainbow indicator
+        this.rainbowIcon = this.add.image(30, 34, 'rainbow_pickup').setDepth(100).setScale(0.8).setVisible(false);
+        this.rainbowLabel = this.add.text(52, 24, 'STAR!', {
+            fontSize: '13px', fontFamily: 'Arial Black, Arial, sans-serif',
+            color: '#ff4444', stroke: '#000000', strokeThickness: 3
+        }).setDepth(100).setVisible(false);
+
+        // Boss HP bar
         this.bossHPBarBg = this.add.graphics().setDepth(100);
         this.bossHPBarFill = this.add.graphics().setDepth(100);
         this.bossNameText = this.add.text(w / 2, 64, '', {
@@ -112,7 +116,7 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(100);
         this.hideBossHP();
 
-        // Boost label
+        // Boost
         if (this.isBoosting) {
             SFX.init();
             SFX.play('boost');
@@ -148,15 +152,16 @@ class GameScene extends Phaser.Scene {
 
         // Timers
         this.obstacleTimer = this.time.addEvent({
-            delay: 1600, callback: this.spawnObstacle, callbackScope: this, loop: true,
-            paused: this.isBoosting
+            delay: 1600, callback: this.spawnObstacle, callbackScope: this, loop: true, paused: this.isBoosting
         });
         this.coinTimer = this.time.addEvent({
-            delay: 1800, callback: this.spawnCoin, callbackScope: this, loop: true,
-            paused: this.isBoosting
+            delay: 1800, callback: this.spawnCoin, callbackScope: this, loop: true, paused: this.isBoosting
         });
         this.shieldTimer = this.time.addEvent({
             delay: 15000, callback: this.maybeSpawnShield, callbackScope: this, loop: true
+        });
+        this.rainbowDropTimer = this.time.addEvent({
+            delay: 25000, callback: this.maybeSpawnRainbow, callbackScope: this, loop: true
         });
         this.shootTimer = this.time.addEvent({
             delay: 180, callback: this.shootBullet, callbackScope: this, loop: true, paused: true
@@ -179,16 +184,9 @@ class GameScene extends Phaser.Scene {
             var boostSpeed = Math.max(8, (this.boostTarget - this.altitude) * 0.05);
             this.altitude += boostSpeed * (delta / 16);
             this.altText.setText(Math.floor(this.altitude) + 'm');
-
             if (this.altitude >= this.boostTarget) {
                 this.altitude = this.boostTarget;
                 this.isBoosting = false;
-                var bossesSkipped = Math.floor(this.boostTarget / 5000);
-                this.bossNumber = bossesSkipped;
-                this.nextBossAt = (bossesSkipped + 1) * 5000;
-                this.bossSpeedBoost = bossesSkipped * 1.5;
-                this.gameSpeed = 2.5 + (this.boostTarget / 500) + this.bossSpeedBoost;
-                this.baseSpeed = this.gameSpeed;
                 if (this.boostLabel) this.boostLabel.destroy();
                 this.obstacleTimer.paused = false;
                 this.coinTimer.paused = false;
@@ -197,8 +195,9 @@ class GameScene extends Phaser.Scene {
         }
 
         // Movement
-        if (this.leftKey.isDown || this.aKey.isDown) this.player.x = Math.max(24, this.player.x - 5);
-        if (this.rightKey.isDown || this.dKey.isDown) this.player.x = Math.min(w - 24, this.player.x + 5);
+        var moveSpd = this.isRainbow ? 7 : 5;
+        if (this.leftKey.isDown || this.aKey.isDown) this.player.x = Math.max(24, this.player.x - moveSpd);
+        if (this.rightKey.isDown || this.dKey.isDown) this.player.x = Math.min(w - 24, this.player.x + moveSpd);
         this.player.y = h * 0.6;
         this.player.setVelocityY(0);
 
@@ -211,9 +210,22 @@ class GameScene extends Phaser.Scene {
             this.shieldGfx.fillCircle(this.player.x, this.player.y, 38);
         }
 
+        // Rainbow visual
+        this.rainbowGfx.clear();
+        if (this.isRainbow) {
+            var colors = [0xff0000, 0xff8800, 0xffff00, 0x00ff00, 0x0088ff, 0xaa00ff];
+            var ci = Math.floor(time / 80) % colors.length;
+            this.rainbowGfx.lineStyle(3, colors[ci], 0.8);
+            this.rainbowGfx.strokeCircle(this.player.x, this.player.y, 40);
+            this.rainbowGfx.lineStyle(2, colors[(ci + 2) % colors.length], 0.5);
+            this.rainbowGfx.strokeCircle(this.player.x, this.player.y, 45);
+            this.player.setTint(colors[ci]);
+        }
+
         // Altitude
+        var altSpeed = this.isRainbow ? this.gameSpeed * 1.5 : this.gameSpeed;
         if (!this.bossActive) {
-            this.altitude += this.gameSpeed * (delta / 16);
+            this.altitude += altSpeed * (delta / 16);
         }
         this.altText.setText(Math.floor(this.altitude) + 'm');
 
@@ -222,17 +234,17 @@ class GameScene extends Phaser.Scene {
             this.startBossFight();
         }
 
-        // Difficulty
+        // Difficulty - obstacles get faster, not player
         if (!this.bossActive) {
             this.difficultyTimer += delta;
             if (this.difficultyTimer > 10000) {
                 this.difficultyTimer = 0;
-                this.gameSpeed = Math.min(this.gameSpeed + 0.3, 12 + this.bossSpeedBoost);
+                this.obstacleSpeed = Math.min(this.obstacleSpeed + 0.4, 14);
                 if (this.obstacleTimer.delay > 600) this.obstacleTimer.delay -= 80;
             }
         }
 
-        var spd = this.bossActive ? 1.2 : this.gameSpeed;
+        var spd = this.bossActive ? 1.2 : this.obstacleSpeed;
 
         this.obstacles.getChildren().forEach(function(obs) {
             obs.y += spd;
@@ -267,98 +279,147 @@ class GameScene extends Phaser.Scene {
             if (cloud.y > h + 60) { cloud.y = -60; cloud.x = Phaser.Math.Between(0, w); }
         });
 
-        // Sky color based on zone - testing
         this.drawSky();
         this.updateZoneLabel();
     }
 
-    getZone() {
-        if (this.altitude < 10000) return 0;
-        if (this.altitude < 20000) return 1;
-        if (this.altitude < 30000) return 2;
-        if (this.altitude < 40000) return 3;
-        if (this.altitude < 50000) return 4;
-        return 5;
-    }
+    // ── Coin Patterns ──
 
-    getZoneProgress() {
-        var zone = this.getZone();
-        return Math.min(1, (this.altitude - zone * 10000) / 10000);
-    }
-
-    drawSky() {
+    spawnCoin() {
+        if (this.isGameOver || this.bossActive) return;
         var w = this.scale.width;
-        var h = this.scale.height;
-        var zone = this.getZone();
-        var p = this.getZoneProgress();
+        var pattern = Phaser.Math.Between(0, 10);
 
-        var zones = [
-            { topA: [87,197,255], botA: [52,152,219], topB: [255,140,50], botB: [255,85,50] },
-            { topA: [255,140,50], botA: [255,85,50], topB: [25,25,80], botB: [60,40,100] },
-            { topA: [25,25,80], botA: [60,40,100], topB: [5,5,30], botB: [10,10,50] },
-            { topA: [5,5,30], botA: [10,10,50], topB: [2,2,15], botB: [5,5,25] },
-            { topA: [2,2,15], botA: [5,5,25], topB: [8,0,20], botB: [20,5,40] },
-            { topA: [8,0,20], botA: [20,5,40], topB: [15,0,30], botB: [30,10,50] }
+        if (pattern <= 4) {
+            this.spawnCoinsRandom(w);
+        } else if (pattern <= 6) {
+            this.spawnCoinsZigzag(w);
+        } else if (pattern <= 8) {
+            this.spawnCoinsStar(w);
+        } else {
+            this.spawnCoinsHeart(w);
+        }
+    }
+
+    spawnCoinsRandom(w) {
+        var count = Phaser.Math.Between(1, 3);
+        for (var i = 0; i < count; i++) {
+            this.makeCoin(Phaser.Math.Between(40, w - 40), -30 - (i * 30));
+        }
+    }
+
+    spawnCoinsZigzag(w) {
+        var startX = Phaser.Math.Between(100, w - 100);
+        var dir = (Math.random() < 0.5) ? 1 : -1;
+        for (var i = 0; i < 6; i++) {
+            var x = startX + dir * (i % 2 === 0 ? -40 : 40);
+            x = Phaser.Math.Clamp(x, 40, w - 40);
+            this.makeCoin(x, -30 - (i * 35));
+        }
+    }
+
+    spawnCoinsStar(w) {
+        var cx = Phaser.Math.Between(100, w - 100);
+        var cy = -80;
+        var r = 40;
+        for (var i = 0; i < 10; i++) {
+            var rad = i % 2 === 0 ? r : r * 0.4;
+            var angle = (Math.PI * 2 * i) / 10 - Math.PI / 2;
+            this.makeCoin(cx + rad * Math.cos(angle), cy + rad * Math.sin(angle));
+        }
+    }
+
+    spawnCoinsHeart(w) {
+        var cx = Phaser.Math.Between(100, w - 100);
+        var cy = -80;
+        var pts = [
+            [0, -10], [-10, -25], [-25, -25], [-30, -15], [-25, 0],
+            [0, 20], [25, 0], [30, -15], [25, -25], [10, -25]
         ];
-
-        var z = zones[Math.min(zone, zones.length - 1)];
-        var tr = Math.round(z.topA[0] + (z.topB[0] - z.topA[0]) * p);
-        var tg = Math.round(z.topA[1] + (z.topB[1] - z.topA[1]) * p);
-        var tb = Math.round(z.topA[2] + (z.topB[2] - z.topA[2]) * p);
-        var br = Math.round(z.botA[0] + (z.botB[0] - z.botA[0]) * p);
-        var bg2 = Math.round(z.botA[1] + (z.botB[1] - z.botA[1]) * p);
-        var bb = Math.round(z.botA[2] + (z.botB[2] - z.botA[2]) * p);
-
-        var tc = Phaser.Display.Color.GetColor(tr, tg, tb);
-        var bc = Phaser.Display.Color.GetColor(br, bg2, bb);
-
-        this.skyBg.clear();
-        this.skyBg.fillGradientStyle(tc, tc, bc, bc, 1);
-        this.skyBg.fillRect(0, 0, w, h);
-
-        this.nebulaGfx.clear();
-        if (this.altitude > 35000) {
-            var nebAlpha = Math.min(0.15, (this.altitude - 35000) / 100000);
-            this.nebulaGfx.fillStyle(0x9b59b6, nebAlpha);
-            this.nebulaGfx.fillCircle(w * 0.2, h * 0.3, 120);
-            this.nebulaGfx.fillCircle(w * 0.8, h * 0.6, 100);
-        }
-
-        var cloudAlpha = Math.max(0, 1 - this.altitude / 25000);
-        this.clouds.getChildren().forEach(function(c) {
-            c.setAlpha(cloudAlpha * Phaser.Math.FloatBetween(0.1, 0.3));
-        });
-    }
-
-    updateZoneLabel() {
-        var zone = this.getZone();
-        if (zone !== this.lastZone) {
-            this.lastZone = zone;
-            var names = ['Lower Atmosphere','Sunset Layer','Night Sky','Upper Atmosphere','Deep Space','The Galaxy'];
-            this.zoneText.setText(names[Math.min(zone, names.length - 1)]);
-            this.zoneText.setAlpha(0.7);
-            var zt = this.zoneText;
-            this.time.delayedCall(3000, function() { zt.setAlpha(0); });
+        for (var i = 0; i < pts.length; i++) {
+            this.makeCoin(cx + pts[i][0] * 1.5, cy + pts[i][1] * 1.5);
         }
     }
+
+    makeCoin(x, y) {
+        var coin = this.collectibles.create(x, y, 'coin');
+        coin.body.setAllowGravity(false);
+        this.tweens.add({ targets: coin, angle: 360, duration: 1500, repeat: -1 });
+    }
+
+    collectCoin(player, coin) {
+        coin.destroy();
+        this.coinsCollected++;
+        this.coinText.setText('' + this.coinsCollected);
+        SFX.play('coin');
+    }
+
+    // ── Shield ──
 
     maybeSpawnShield() {
-        if (this.isGameOver || this.bossActive || this.hasShield || this.isBoosting) return;
+        if (this.isGameOver || this.bossActive || this.hasShield || this.isBoosting || this.isRainbow) return;
         if (Math.random() > 0.4) return;
         var w = this.scale.width;
         var shield = this.powerups.create(Phaser.Math.Between(40, w - 40), -30, 'shield_pickup');
         shield.body.setAllowGravity(false);
         shield.setScale(1.2);
         shield.setDepth(45);
+        shield.powerType = 'shield';
         this.tweens.add({ targets: shield, angle: 360, duration: 3000, repeat: -1 });
     }
 
+    // ── Rainbow ──
+
+    maybeSpawnRainbow() {
+        if (this.isGameOver || this.bossActive || this.isRainbow || this.isBoosting) return;
+        if (Math.random() > 0.3) return;
+        var w = this.scale.width;
+        var rb = this.powerups.create(Phaser.Math.Between(40, w - 40), -30, 'rainbow_pickup');
+        rb.body.setAllowGravity(false);
+        rb.setScale(1.2);
+        rb.setDepth(45);
+        rb.powerType = 'rainbow';
+        this.tweens.add({ targets: rb, angle: 360, duration: 2000, repeat: -1 });
+        this.tweens.add({ targets: rb, scale: 1.5, duration: 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+
     collectPowerup(player, pickup) {
+        var type = pickup.powerType || 'shield';
         pickup.destroy();
-        this.hasShield = true;
-        this.shieldIcon.setVisible(true);
-        this.shieldLabel.setVisible(true);
-        SFX.play('shield');
+
+        if (type === 'shield') {
+            this.hasShield = true;
+            this.shieldIcon.setVisible(true);
+            this.shieldLabel.setVisible(true);
+            SFX.play('shield');
+        } else if (type === 'rainbow') {
+            this.activateRainbow();
+        }
+    }
+
+    activateRainbow() {
+        var self = this;
+        this.isRainbow = true;
+        this.rainbowIcon.setVisible(true);
+        this.rainbowLabel.setVisible(true);
+        // Hide shield icons if showing
+        this.shieldIcon.setVisible(false);
+        this.shieldLabel.setVisible(false);
+        SFX.play('rainbow');
+
+        if (this.rainbowTimer) this.rainbowTimer.remove();
+        this.rainbowTimer = this.time.delayedCall(5000, function() {
+            self.isRainbow = false;
+            self.rainbowGfx.clear();
+            self.rainbowIcon.setVisible(false);
+            self.rainbowLabel.setVisible(false);
+            if (self.player && self.player.active) self.player.clearTint();
+            // Restore shield icon if still has shield
+            if (self.hasShield) {
+                self.shieldIcon.setVisible(true);
+                self.shieldLabel.setVisible(true);
+            }
+        });
     }
 
     useShield() {
@@ -372,6 +433,8 @@ class GameScene extends Phaser.Scene {
         var p = this.player;
         this.time.delayedCall(800, function() { if (p && p.active) p.setAlpha(1); });
     }
+
+    // ── Boss ──
 
     startBossFight() {
         var w = this.scale.width;
@@ -485,7 +548,7 @@ class GameScene extends Phaser.Scene {
             fontSize: '36px', fontFamily: 'Arial Black, Arial, sans-serif',
             color: '#2ecc71', stroke: '#000000', strokeThickness: 6
         }).setOrigin(0.5).setDepth(100);
-        var s = this.add.text(w / 2, 285, 'SPEED UP!', {
+        var s = this.add.text(w / 2, 285, 'FASTER!', {
             fontSize: '24px', fontFamily: 'Arial Black, Arial, sans-serif',
             color: '#f39c12', stroke: '#000000', strokeThickness: 4
         }).setOrigin(0.5).setDepth(100);
@@ -495,11 +558,13 @@ class GameScene extends Phaser.Scene {
             onComplete: function(t, targets) { targets[0].destroy(); targets[1].destroy(); }
         });
 
-        this.bossSpeedBoost += 1.5;
-        this.gameSpeed = this.baseSpeed + this.bossSpeedBoost;
-        this.baseSpeed = this.gameSpeed;
-        this.obstacleTimer.delay = Math.max(500, this.obstacleTimer.delay - 200);
-        this.nextBossAt += 5000;
+        // Obstacles get faster after boss, not the player
+        this.obstacleSpeed += 1.5;
+        this.obstacleTimer.delay = Math.max(400, this.obstacleTimer.delay - 200);
+
+        // Boss distance increases: 5000, 15000, 30000, 50000...
+        this.bossGap += 5000;
+        this.nextBossAt += this.bossGap;
 
         this.time.delayedCall(2000, function() {
             if (self.isGameOver) return;
@@ -545,8 +610,82 @@ class GameScene extends Phaser.Scene {
     hitByBomb(player, bomb) {
         if (this.isGameOver) return;
         bomb.destroy();
+        if (this.isRainbow) return;
         if (this.hasShield) { this.useShield(); return; }
         this.gameOver();
+    }
+
+    hitObstacle(player, obstacle) {
+        if (this.isGameOver) return;
+        if (this.isRainbow) { obstacle.destroy(); return; }
+        if (this.hasShield) { obstacle.destroy(); this.useShield(); return; }
+        this.gameOver();
+    }
+
+    // ── Sky ──
+
+    getZone() {
+        if (this.altitude < 10000) return 0;
+        if (this.altitude < 20000) return 1;
+        if (this.altitude < 30000) return 2;
+        if (this.altitude < 40000) return 3;
+        if (this.altitude < 50000) return 4;
+        return 5;
+    }
+
+    getZoneProgress() {
+        var zone = this.getZone();
+        return Math.min(1, (this.altitude - zone * 10000) / 10000);
+    }
+
+    drawSky() {
+        var w = this.scale.width;
+        var h = this.scale.height;
+        var zone = this.getZone();
+        var p = this.getZoneProgress();
+        var zones = [
+            { topA: [87,197,255], botA: [52,152,219], topB: [255,140,50], botB: [255,85,50] },
+            { topA: [255,140,50], botA: [255,85,50], topB: [25,25,80], botB: [60,40,100] },
+            { topA: [25,25,80], botA: [60,40,100], topB: [5,5,30], botB: [10,10,50] },
+            { topA: [5,5,30], botA: [10,10,50], topB: [2,2,15], botB: [5,5,25] },
+            { topA: [2,2,15], botA: [5,5,25], topB: [8,0,20], botB: [20,5,40] },
+            { topA: [8,0,20], botA: [20,5,40], topB: [15,0,30], botB: [30,10,50] }
+        ];
+        var z = zones[Math.min(zone, zones.length - 1)];
+        var tr = Math.round(z.topA[0] + (z.topB[0] - z.topA[0]) * p);
+        var tg = Math.round(z.topA[1] + (z.topB[1] - z.topA[1]) * p);
+        var tb = Math.round(z.topA[2] + (z.topB[2] - z.topA[2]) * p);
+        var br = Math.round(z.botA[0] + (z.botB[0] - z.botA[0]) * p);
+        var bg2 = Math.round(z.botA[1] + (z.botB[1] - z.botA[1]) * p);
+        var bb = Math.round(z.botA[2] + (z.botB[2] - z.botA[2]) * p);
+        var tc = Phaser.Display.Color.GetColor(tr, tg, tb);
+        var bc = Phaser.Display.Color.GetColor(br, bg2, bb);
+        this.skyBg.clear();
+        this.skyBg.fillGradientStyle(tc, tc, bc, bc, 1);
+        this.skyBg.fillRect(0, 0, w, h);
+        this.nebulaGfx.clear();
+        if (this.altitude > 35000) {
+            var nebAlpha = Math.min(0.15, (this.altitude - 35000) / 100000);
+            this.nebulaGfx.fillStyle(0x9b59b6, nebAlpha);
+            this.nebulaGfx.fillCircle(w * 0.2, h * 0.3, 120);
+            this.nebulaGfx.fillCircle(w * 0.8, h * 0.6, 100);
+        }
+        var cloudAlpha = Math.max(0, 1 - this.altitude / 25000);
+        this.clouds.getChildren().forEach(function(c) {
+            c.setAlpha(cloudAlpha * Phaser.Math.FloatBetween(0.1, 0.3));
+        });
+    }
+
+    updateZoneLabel() {
+        var zone = this.getZone();
+        if (zone !== this.lastZone) {
+            this.lastZone = zone;
+            var names = ['Lower Atmosphere','Sunset Layer','Night Sky','Upper Atmosphere','Deep Space','The Galaxy'];
+            this.zoneText.setText(names[Math.min(zone, names.length - 1)]);
+            this.zoneText.setAlpha(0.7);
+            var zt = this.zoneText;
+            this.time.delayedCall(3000, function() { zt.setAlpha(0); });
+        }
     }
 
     spawnObstacle() {
@@ -566,28 +705,13 @@ class GameScene extends Phaser.Scene {
         obs.body.setImmovable(true);
     }
 
-    spawnCoin() {
-        if (this.isGameOver || this.bossActive) return;
+    spawnCloud(yPos) {
         var w = this.scale.width;
-        var count = Phaser.Math.Between(1, 3);
-        for (var i = 0; i < count; i++) {
-            var coin = this.collectibles.create(Phaser.Math.Between(40, w - 40), -30 - (i * 30), 'coin');
-            coin.body.setAllowGravity(false);
-            this.tweens.add({ targets: coin, angle: 360, duration: 1500, repeat: -1 });
-        }
-    }
-
-    collectCoin(player, coin) {
-        coin.destroy();
-        this.coinsCollected++;
-        this.coinText.setText('' + this.coinsCollected);
-        SFX.play('coin');
-    }
-
-    hitObstacle(player, obstacle) {
-        if (this.isGameOver) return;
-        if (this.hasShield) { obstacle.destroy(); this.useShield(); return; }
-        this.gameOver();
+        var cloud = this.add.image(Phaser.Math.Between(0, w), yPos || -40, 'cloud');
+        cloud.setAlpha(Phaser.Math.FloatBetween(0.1, 0.3));
+        cloud.setScale(Phaser.Math.FloatBetween(0.7, 1.3));
+        cloud.setDepth(3);
+        this.clouds.add(cloud);
     }
 
     gameOver() {
@@ -597,6 +721,10 @@ class GameScene extends Phaser.Scene {
         SFX.play('death');
         this.shootTimer.paused = true;
         this.bossBombTimer.paused = true;
+        if (this.isRainbow) {
+            this.isRainbow = false;
+            this.rainbowGfx.clear();
+        }
         this.player.setTint(0xff0000);
         this.shieldGfx.clear();
         this.physics.pause();
