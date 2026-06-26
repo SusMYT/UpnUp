@@ -552,18 +552,49 @@ class PlanetScene extends Phaser.Scene {
         localStorage.setItem('upnup_coins', currentCoins + this.coinsCollected);
 
         var self = this;
-        var retryText = this.add.text(this.scale.width / 2, this.scale.height * 0.5, 'TAP TO RETRY PLANET', {
-            fontSize: '24px', fontFamily: 'Arial Black, Arial, sans-serif',
-            color: '#e74c3c', stroke: '#000000', strokeThickness: 5
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+        var w = this.scale.width;
+        var h = this.scale.height;
 
-        this.time.delayedCall(1000, function() {
-            self.input.once('pointerdown', function() {
-                // Restart planet with same flight data but reset coins earned on planet
-                self.flightData.coins = 0;
-                self.flightData.hasShield = false;
-                self.scene.restart(self.flightData);
+        // Retry button
+        var retryBtn = this.add.image(w / 2, h * 0.5, 'button').setScrollFactor(0).setDepth(200).setInteractive({ useHandCursor: true });
+        this.add.text(w / 2, h * 0.5 - 4, 'RETRY PLANET', {
+            fontSize: '22px', fontFamily: 'Arial Black, Arial, sans-serif', color: '#ffffff'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
+
+        retryBtn.on('pointerdown', function() {
+            self.flightData.coins = 0;
+            self.flightData.hasShield = false;
+            self.scene.restart(self.flightData);
+        });
+
+        // Give Up button
+        var giveUpBtn = this.add.image(w / 2, h * 0.6, 'button').setScrollFactor(0).setDepth(200).setScale(0.8).setInteractive({ useHandCursor: true });
+        this.add.text(w / 2, h * 0.6 - 3, 'GIVE UP', {
+            fontSize: '18px', fontFamily: 'Arial Black, Arial, sans-serif', color: '#ffffff'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
+
+        giveUpBtn.on('pointerdown', function() {
+            var finalScore = Math.floor(self.flightData.altitude || 0);
+            var highScore = parseInt(localStorage.getItem('upnup_highscore') || '0');
+            var isNewBest = finalScore > highScore;
+            if (isNewBest) localStorage.setItem('upnup_highscore', finalScore);
+            self.scene.start('GameOverScene', {
+                score: finalScore,
+                coins: 0,
+                isNewBest: isNewBest,
+                bossesDefeated: self.flightData.bossNumber || 0
             });
+        });
+
+        // Menu button
+        var menuText = this.add.text(w / 2, h * 0.7, 'MENU', {
+            fontSize: '18px', fontFamily: 'Arial, sans-serif', color: '#95a5a6'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setInteractive({ useHandCursor: true });
+
+        menuText.on('pointerover', function() { menuText.setColor('#ffffff'); });
+        menuText.on('pointerout', function() { menuText.setColor('#95a5a6'); });
+        menuText.on('pointerdown', function() {
+            self.scene.start('MenuScene');
         });
     }
 
