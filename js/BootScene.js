@@ -7,6 +7,7 @@ class BootScene extends Phaser.Scene {
         this.load.image('player_wings', 'assets/playerskin_wings.png');
         this.load.image('player_cheddarfries', 'assets/playerskin_CheddarFries.png');
         this.load.image('player_croccat', 'assets/playerskin_CrocCat.png');
+        this.load.image('player_salad', 'assets/playerskin_salad.png');
         this.load.image('boss', 'assets/bossship_Salad.png');
         this.load.image('obstacle', 'assets/obstacles_Clouds.png');
         this.load.image('obstacle_spike', 'assets/obstacles_Satelite.png');

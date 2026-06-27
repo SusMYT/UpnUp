@@ -168,6 +168,7 @@ class ShopScene extends Phaser.Scene {
             { id: 'wings', name: 'Wings', price: 750, texture: 'player_wings' },
             { id: 'cheddarfries', name: 'Cheddar Fries', price: 500, texture: 'player_cheddarfries' },
             { id: 'croccat', name: 'Croc Cat', price: 600, texture: 'player_croccat' },
+            { id: 'salad', name: 'Salad', price: 500, texture: 'player_salad' },
         ];
 
         const startY = 130;
